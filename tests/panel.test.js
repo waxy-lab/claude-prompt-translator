@@ -4,11 +4,13 @@ import fs from 'node:fs/promises';
 
 test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和明确替换', async t => {
   const originalInterval = globalThis.setInterval;
+  const originalNow = Date.now;
+  let time = 0; Date.now = () => time;
   const originalNavigator = Object.getOwnPropertyDescriptor(globalThis, 'navigator');
   const hooks = () => ({ listeners: [], addListener(fn) { this.listeners.push(fn); } });
   const html = await fs.readFile(new URL('../sidepanel.html', import.meta.url), 'utf8');
   const nodes = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, {
-    id, value: '', textContent: '', disabled: false, hidden: false,
+    id, value: '', textContent: '', disabled: false, hidden: false, dataset: {},
     classList: { toggle() {} }, handlers: {},
     addEventListener(name, handler) { this.handlers[name] = handler; },
     async trigger(name) { if (name === 'click' && this.disabled) return; return this.handlers[name]?.(); },
@@ -18,8 +20,8 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   globalThis.setInterval = fn => { poll = fn; return 1; };
   const memory = {}, requests = [];
   let target = { tabId: 1, windowId: 8, href: 'https://claude.ai/chat/a', documentId: 'doc1', nonce: 'nonce', revision: 0 };
-  let nonempty = false;
-  globalThis.document = { hidden: false, querySelectorAll: () => Object.values(nodes), addEventListener() {} };
+  let nonempty = false, reply = null;
+  globalThis.document = { hidden: false, handlers: {}, querySelectorAll: () => Object.values(nodes), addEventListener(name, fn) { this.handlers[name] = fn; } };
   globalThis.window = { addEventListener() {} };
   globalThis.chrome = {
     storage: { session: {
@@ -32,6 +34,7 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
       requests.push(structuredClone(request));
       if (request.type === 'TARGET') return { ok: true, target: structuredClone(target) };
       if (request.type === 'PREPARE') return { ok: true, token: 'one-use', nonempty };
+      if (request.type === 'READ_REPLY') return { ok: true, reply: structuredClone(reply) };
       return { ok: true };
     } }
   };
@@ -39,6 +42,7 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   globalThis.Translator = { availability: async () => 'available', create: async () => ({ translate: async () => 'English result', destroy() {} }) };
   t.after(() => {
     globalThis.setInterval = originalInterval;
+    Date.now = originalNow;
     if (originalNavigator) Object.defineProperty(globalThis, 'navigator', originalNavigator);
     delete globalThis.chrome; delete globalThis.document; delete globalThis.window; delete globalThis.Translator;
   });
@@ -80,6 +84,12 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   const committed = requests.filter(r => r.type === 'COMMIT');
   assert.equal(committed.length, 1); assert.equal(committed[0].text, 'Revised English'); assert.equal(committed[0].replace, true);
   assert.ok(!Object.hasOwn(committed[0], 'source'));
+  await input('output', 'English `// 中文注释` https://example.test/路径');
+  assert.equal(nodes.fill.disabled, true); assert.match(nodes.boundaryStatus.textContent, /第 1 行/);
+  const preparations = requests.filter(r => r.type === 'PREPARE').length;
+  await nodes.fill.handlers.click();
+  assert.equal(requests.filter(r => r.type === 'PREPARE').length, preparations, 'boundary blocks before any webpage message');
+  await input('output', 'Revised English');
 
   target = { ...target, href: 'https://claude.ai/chat/b', revision: 1 }; poll(); await tick();
   assert.equal(nodes.source.value, ''); assert.equal(nodes.output.value, '');
@@ -92,4 +102,21 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   assert.equal(memory['draft:1:https://claude.ai/chat/a'], undefined);
   assert.equal(memory['draft:1:https://claude.ai/chat/b'], undefined);
   assert.ok(requests.filter(r => ['PREPARE', 'COMMIT', 'CANCEL_FILL'].includes(r.type)).every(r => !JSON.stringify(r).includes('会话甲')));
+  let replyCreates = 0;
+  globalThis.Translator.create = async options => {
+    assert.equal(options.sourceLanguage, 'en'); assert.equal(options.targetLanguage, 'zh'); replyCreates++;
+    return { translate: async body => `阅读译文:${body}`, destroy() {} };
+  };
+  reply = { id: 'one', text: 'First answer.', stableText: 'First answer.', streaming: false };
+  await nodes.readStart.trigger('click'); time += 2000; await poll(); await tick();
+  assert.equal(nodes.replyText.textContent, '阅读译文:First answer.');
+  reply = { id: 'two', text: 'Second answer.', stableText: 'Second answer.', streaming: false };
+  await poll(); time += 2000; await poll(); await tick();
+  assert.equal(nodes.replyText.textContent, '阅读译文:Second answer.'); assert.equal(replyCreates, 1);
+  assert.ok(!JSON.stringify(memory).includes('阅读译文')); assert.ok(!JSON.stringify(requests).includes('阅读译文'));
+  assert.ok(requests.filter(r => r.type === 'READ_REPLY').every(r => Object.keys(r).sort().join() === 'target,type'));
+  document.hidden = true; document.handlers.visibilitychange();
+  assert.equal(nodes.replyText.textContent, ''); assert.equal(nodes.replyOriginal.textContent, '');
+  const readCount = requests.filter(r => r.type === 'READ_REPLY').length;
+  await poll(); assert.equal(requests.filter(r => r.type === 'READ_REPLY').length, readCount);
 });

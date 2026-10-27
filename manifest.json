@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
   "name": "Claude 英文提问助手",
-  "version": "0.1.1",
-  "description": "在独立侧栏用 Chrome 本地翻译整理英文问题，检查后填入 Claude，由你发送。",
+  "version": "0.2.1",
+  "description": "侧栏中文草稿本地翻成英文，检查后填入 Claude；一次开启，自动在侧栏阅读最新回复的中文译文。",
   "minimum_chrome_version": "138",
   "permissions": ["sidePanel", "activeTab", "scripting", "storage"],
   "action": { "default_title": "打开英文提问助手" },

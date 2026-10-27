@@ -11,8 +11,14 @@ FILES = [
     'manifest.json', 'background.js', 'sidepanel.html', 'sidepanel.css', 'sidepanel.js',
     'lib/target.js', 'lib/protected-text.js', 'lib/task-gate.js', 'lib/translator.js',
     'lib/draft-store.js', 'content/claude-adapter.js', 'README.md', 'TEST_REPORT.md', 'DESIGN.md',
+    'lib/auto-reader.js', 'lib/reply-translator.js', 'lib/text-boundary.js', 'content/reply-reader.js', 'NEXT_TASK.md',
+    'lib/reply-format.js', 'lib/reply-text.js',
     'evidence/chrome-probe-2026-10-27.json', 'evidence/unit-tests.txt',
     'evidence/browser-fixtures.json',
+    'evidence/reading-browser-fixtures.json', 'evidence/local-model-0.2.0.json', 'evidence/unit-tests-0.1.1.txt',
+    'evidence/unit-tests-0.2.0.txt', 'evidence/quality-model-0.2.1.json',
+    'evidence/quality-model-0.2.1-attempt1.json', 'evidence/quality-model-0.2.1-attempt2.json',
+    'evidence/quality-model-0.2.1-initial-protocol.json', 'evidence/quality-model-0.2.1-marker-diagnostics.json',
 ]
 
 def main():

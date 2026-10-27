@@ -38,6 +38,13 @@ test('后台协调：限制消息来源、重新核对目标、按 documentId �
   assert.deepEqual(inserted.target, { tabId: 1, documentIds: ['doc1'] });
   assert.equal(inserted.world, 'ISOLATED'); assert.equal(inserted.args[0].text, 'English');
   assert.equal(inserted.args[0].replace, true);
+  calls = [];
+  assert.equal((await send({ type: 'COMMIT', target, text: 'English `中文`', token: 'token' })).ok, false);
+  assert.equal(calls.length, 0, 'Chinese never reaches an injected function');
+  assert.equal((await send({ type: 'READ_REPLY', target, source: 'must not forward', translation: '不得传入网页' })).ok, true);
+  const read = calls.find(c => c.func?.name === 'readLatestReply');
+  assert.equal(read.world, 'ISOLATED'); assert.deepEqual(read.target.documentIds, ['doc1']);
+  assert.deepEqual(read.args, [target]);
   tab = { ...tab, url: 'https://claude.ai.evil.test/' }; calls = [];
   assert.equal((await send({ type: 'TARGET', windowId: 2 })).ok, false); assert.equal(calls.length, 0);
   await chrome.tabs.onRemoved.fn(1); assert.deepEqual(removed, ['draft:1:https://claude.ai/chat/a']);
@@ -51,7 +58,7 @@ test('交付清单只包含最小权限，没有常驻网页注入及网络上�
   assert.deepEqual(manifest.permissions.slice().sort(), ['activeTab', 'scripting', 'sidePanel', 'storage']);
   for (const key of ['host_permissions', 'content_scripts', 'externally_connectable', 'web_accessible_resources']) assert.equal(manifest[key], undefined);
   assert.ok(manifest.content_security_policy.extension_pages.includes("connect-src 'none'"));
-  const files = ['background.js', 'sidepanel.js', 'lib/translator.js', 'lib/draft-store.js', 'lib/protected-text.js', 'lib/task-gate.js', 'lib/target.js', 'content/claude-adapter.js'];
+  const files = ['background.js', 'sidepanel.js', 'lib/translator.js', 'lib/draft-store.js', 'lib/protected-text.js', 'lib/task-gate.js', 'lib/target.js', 'content/claude-adapter.js', 'content/reply-reader.js', 'lib/auto-reader.js', 'lib/reply-translator.js', 'lib/text-boundary.js'];
   for (const file of files) {
     const source = await fs.readFile(new URL(file, root), 'utf8');
     assert.ok(!/\b(fetch|XMLHttpRequest|WebSocket|sendBeacon)\s*\(/.test(source), file);

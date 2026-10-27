@@ -172,6 +172,14 @@ test('textarea 使用原生 setter 和 input 事件', async t => {
   assert.equal(result.ok, true); assert.equal(f.el.value, 'new\nline'); assert.equal(f.writes, 0);
 });
 
+test('页面写入最后一道边界拒绝汉字和全角，不修改受保护代码', async t => {
+  for (const text of ['English 中文', 'Ｈｅｌｌｏ', '`// 中文`', 'https://a.test/中文', '￥5']) {
+    const f = fixture(t); const p = await f.call({ mode: 'prepare' });
+    assert.equal((await f.call({ mode: 'commit', token: p.token, text })).code, 'CHINESE_BOUNDARY');
+    assert.equal(f.writes, 0); assert.equal(f.el.innerText, '');
+  }
+});
+
 test('页面身份探针不读取编辑器，导航事件提升版本', () => {
   const listeners = new Map();
   const ctx = vm.createContext({

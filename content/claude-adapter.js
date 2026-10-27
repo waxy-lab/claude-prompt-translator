@@ -82,6 +82,9 @@ export async function claudeAdapter(request) {
   if (typeof text !== 'string' || !text.trim() || [...text].length > 120000 || text.includes('\r')) {
     release(); return failure('INVALID_TEXT', '英文结果为空、过长或格式不可用，请检查后重试。');
   }
+  if (/\p{Script=Han}|[\u3000-\u303f\ufe10-\ufe19\ufe30-\ufe4f\uff01-\uff60\uffe0-\uffe6]/u.test(text)) {
+    release(); return failure('CHINESE_BOUNDARY', '结果含汉字或中文全角字符，已停止填入；请回侧栏处理，代码和链接不会被自动改写。');
+  }
   // Focus handlers may change the draft; recheck AFTER focus, before selecting/writing.
   el.focus();
   if (!unchanged()) { release(); return failure('DRAFT_CHANGED', '聚焦输入框时页面内容发生变化，已停止填入。'); }

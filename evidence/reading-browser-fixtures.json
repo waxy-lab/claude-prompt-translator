@@ -1,0 +1,64 @@
+{
+  "date": "2026-10-27",
+  "version": "156.0.8078.48",
+  "scope": "Real Chrome renderer with local fixtures; sidebar Chrome APIs and Translator are mocked. Not live Claude/extension-source verification.",
+  "results": [
+    {
+      "name": "only marked assistant body, excludes user/draft/thinking/artifact, preserves code and exact link target; no DOM writes",
+      "passed": true
+    },
+    {
+      "name": "latest assistant selected, nested markers deduplicated",
+      "passed": true
+    },
+    {
+      "name": "streaming stable block excludes mutable trailing block",
+      "passed": true
+    },
+    {
+      "name": "single wrapper while streaming safely waits rather than exposing partial as complete",
+      "passed": true
+    },
+    {
+      "name": "no marker never falls back to whole page or editor",
+      "passed": true
+    },
+    {
+      "name": "overlong reply rejected without partial text",
+      "passed": true
+    },
+    {
+      "name": "identity mismatch rejected before reading",
+      "passed": true
+    },
+    {
+      "name": "unsupported math fails explicitly, image-only answer does not trigger whole-page reading",
+      "passed": true
+    },
+    {
+      "name": "feedback reproduction: narrow Markdown body, no reader summary/promo/time, compact nesting and code language",
+      "passed": true
+    },
+    {
+      "name": "CSS-clipped accessibility preview excluded even without sr-only class",
+      "passed": true
+    },
+    {
+      "name": "actual sidebar sends exactly the preview, no appended instructions, blocks Chinese before preparing",
+      "passed": true
+    },
+    {
+      "name": "actual sidebar one enable gesture automatically translates two new replies, Chinese stays local and is not persisted",
+      "passed": true
+    },
+    {
+      "name": "pause immediately clears reply UI and stops polling; no automatic messages sent",
+      "passed": true
+    },
+    {
+      "name": "safe readable headings/list/inline-code/language-labelled code; exact whitespace and no HTML execution",
+      "passed": true
+    }
+  ],
+  "runtimeErrors": []
+}

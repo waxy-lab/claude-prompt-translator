@@ -1,0 +1,12 @@
+{
+  "date": "2026-10-27",
+  "version": "156.0.8078.48",
+  "timedOut": false,
+  "scope": "Real Chrome Translator, ordinary localhost document. Small technical samples, not live Claude or a translation benchmark.",
+  "probe": {
+    "api": "function",
+    "samples": [],
+    "error": "Error: 请保持侧栏可见，再点击开启自动中文阅读。",
+    "finished": true
+  }
+}

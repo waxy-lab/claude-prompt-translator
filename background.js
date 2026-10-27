@@ -1,5 +1,7 @@
 import { captureIdentity, isClaudeUrl, sameTarget } from './lib/target.js';
 import { claudeAdapter } from './content/claude-adapter.js';
+import { readLatestReply } from './content/reply-reader.js';
+import { containsChinese } from './lib/text-boundary.js';
 
 chrome.action.onClicked.addListener(tab => {
   // Called immediately inside the browser user gesture.
@@ -24,12 +26,20 @@ async function currentTarget(windowId) {
 
 async function handle(message) {
   if (message.type === 'TARGET') return { ok: true, target: await currentTarget(message.windowId) };
-  if (!['PREPARE', 'COMMIT', 'CANCEL_FILL'].includes(message.type)) throw new Error('不支持的操作。');
+  if (!['PREPARE', 'COMMIT', 'CANCEL_FILL', 'READ_REPLY'].includes(message.type)) throw new Error('不支持的操作。');
+  if (message.type === 'COMMIT' && (typeof message.text !== 'string' || message.text.length > 240000)) throw new Error('英文结果格式不可用。');
+  if (message.type === 'COMMIT' && containsChinese(message.text)) return { ok: false, message: '结果仍含汉字或中文全角字符，已阻止填入。请检查代码、注释和链接等原样保留的内容。' };
   const expected = message.target;
   if (!expected || !isClaudeUrl(expected.href)) throw new Error('目标无效，请重新打开侧栏。');
   const actual = await currentTarget(expected.windowId);
   if (!sameTarget(expected, actual)) throw new Error('目标标签页或会话已变化，已停止填入。');
-  if (message.type === 'COMMIT' && (typeof message.text !== 'string' || message.text.length > 240000)) throw new Error('英文结果格式不可用。');
+  if (message.type === 'READ_REPLY') {
+    const [frame] = await chrome.scripting.executeScript({
+      target: { tabId: actual.tabId, documentIds: [actual.documentId] },
+      world: 'ISOLATED', func: readLatestReply, args: [actual]
+    });
+    return frame?.result || { ok: false, message: '页面已关闭或导航，已停止读取回复。' };
+  }
   const request = {
     mode: { PREPARE: 'prepare', COMMIT: 'commit', CANCEL_FILL: 'cancel' }[message.type],
     expected,
@@ -45,7 +55,9 @@ async function handle(message) {
 
 chrome.runtime.onMessage.addListener((message, sender, respond) => {
   if (sender.id !== chrome.runtime.id || sender.url !== chrome.runtime.getURL('sidepanel.html')) return false;
-  handle(message).then(respond, () => respond({ ok: false, message: '无法操作当前页面：页面可能变化或授权已失效。请回 Claude 再点扩展图标；也可复制英文。' }));
+  handle(message).then(respond, () => respond({ ok: false, message: message.type === 'READ_REPLY' ?
+    '无法读取当前 Claude 回复：页面可能变化或授权已失效。请回 Claude 再点扩展图标，然后重新开启自动阅读。' :
+    '无法操作当前页面：页面可能变化或授权已失效。请回 Claude 再点扩展图标；也可复制英文。' }));
   return true;
 });
 

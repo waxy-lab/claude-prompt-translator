@@ -23,10 +23,21 @@
     <textarea id="output" rows="8" placeholder="英文翻译会显示在这里" spellcheck="true" lang="en" disabled></textarea>
     <p id="validity" class="status" role="status"></p>
     <p id="warning" class="warning" role="status"></p>
+    <p id="boundaryStatus" class="warning" role="alert"></p>
     <div id="replaceBox" class="confirm" hidden><strong>Claude 中已有草稿</strong><p>替换会移除网页输入框中的现有文字。继续前请确认已自行保留需要的内容。</p><div class="actions"><button id="replace" class="danger">替换现有草稿</button><button id="keep">取消</button></div></div>
     <div class="actions"><button id="fill" class="primary" disabled>填入 Claude</button><button id="copy" disabled>复制英文</button><button id="clear" disabled>清空</button></div>
     <p id="actionStatus" class="status" role="status" aria-live="polite"></p>
+    <section class="reading" aria-labelledby="readingTitle">
+      <div class="label-row"><h2 id="readingTitle">自动中文阅读</h2><span class="muted">仅当前会话 · 本地英译中</span></div>
+      <p class="reading-intro">开启一次，后续最新助手回复自动更新到这里。中文译文只在侧栏显示。</p>
+      <div class="actions"><button id="readStart" class="primary" disabled>开启自动阅读</button><button id="readPause" hidden>暂停并清空译文</button></div>
+      <p id="readStatus" class="status" role="status" aria-live="polite">尚未开启。先进入 Claude 会话，再点击开启。</p>
+      <div id="replyText" class="reply-text reply-view" lang="zh-CN" hidden></div>
+      <p id="replyWarnings" class="warning" role="status"></p>
+      <details id="replyOriginalBox" hidden><summary>展开英文原文核对</summary><pre id="replyOriginal" class="reply-text" lang="en"></pre></details>
+      <p class="muted">显示稳定片段或快照；生成中的回复可能继续更新。代码和链接按文本保留，不翻译思考区或文档区。</p>
+    </section>
   </main>
-  <footer>草稿只保留至本次浏览器会话；关闭标签页或点击清空可删除当前草稿。<br>本地翻译可能误译，尤其是术语和否定句。插件不会自动发送。</footer>
+  <footer>问题草稿只保留至本次浏览器会话。回复译文仅在内存中，暂停、隐藏或切换目标后清除。<br>本地翻译可能误译，尤其是术语和否定句。插件不会自动发送。</footer>
 </body>
 </html>
