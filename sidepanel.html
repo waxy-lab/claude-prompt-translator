@@ -8,36 +8,64 @@
   <script type="module" src="sidepanel.js"></script>
 </head>
 <body>
-  <header><span class="eyebrow">CLAUDE · 语言辅助</span><h1>英文提问助手<span class="badge">本地</span></h1>
-    <p>用中文组织问题，检查英文后填入 Claude，<strong>由你发送</strong>。</p>
+  <header class="app-header">
+    <div><span class="eyebrow">CLAUDE 助手</span><h1>英文提问助手</h1></div>
+    <span class="local-badge">本地翻译</span>
   </header>
+  <div class="context-row"><p id="targetStatus" class="target" role="status">正在连接当前页面…</p><span id="readerIndicator" class="status-chip" role="status">阅读未开启</span></div>
+  <nav class="mode-tabs" role="tablist" aria-label="工作分区">
+    <button id="askTab" role="tab" aria-selected="true" aria-controls="askPanel" tabindex="0">提问 <span id="promptFlag" class="tab-flag" hidden></span></button>
+    <button id="readingTab" role="tab" aria-selected="false" aria-controls="readingPanel" tabindex="-1">阅读</button>
+  </nav>
+  <div id="crossNotice" class="cross-notice" hidden><p id="crossStatus" role="status"></p><button id="returnPrompt" class="text-button">查看提问</button></div>
   <main>
-    <section class="engine"><span class="dot" aria-hidden="true"></span><div><strong>Chrome 本地翻译</strong><p id="engineStatus" role="status">正在检查本地引擎…</p></div><button id="check" class="small">重新检查</button></section>
-    <p id="targetStatus" class="target" role="status">正在核对目标页面…</p>
-    <div class="label-row"><label for="source">中文草稿</label><select id="language" aria-label="中文类型"><option value="zh">简体中文 → 英文</option><option value="zh-Hant">繁體中文 → 英文</option></select></div>
-    <textarea id="source" rows="8" placeholder="在这里写下你的问题…&#10;代码和链接会尽量按原样保留。" spellcheck="false" disabled></textarea>
-    <div class="meta"><span>仅在点击时翻译</span><span id="count">0 / 12,000</span></div>
-    <div class="translation-actions"><button id="translate" class="primary" disabled>翻译成英文 <span aria-hidden="true">↓</span></button><button id="cancel" hidden>取消翻译</button></div>
-    <p id="taskStatus" class="status" role="status" aria-live="polite"></p>
-    <div class="label-row"><label for="output">英文结果</label><span class="muted">可编辑，填入前请核对</span></div>
-    <textarea id="output" rows="8" placeholder="英文翻译会显示在这里" spellcheck="true" lang="en" disabled></textarea>
-    <p id="validity" class="status" role="status"></p>
-    <p id="warning" class="warning" role="status"></p>
-    <p id="boundaryStatus" class="warning" role="alert"></p>
-    <div id="replaceBox" class="confirm" hidden><strong>Claude 中已有草稿</strong><p>替换会移除网页输入框中的现有文字。继续前请确认已自行保留需要的内容。</p><div class="actions"><button id="replace" class="danger">替换现有草稿</button><button id="keep">取消</button></div></div>
-    <div class="actions"><button id="fill" class="primary" disabled>填入 Claude</button><button id="copy" disabled>复制英文</button><button id="clear" disabled>清空</button></div>
-    <p id="actionStatus" class="status" role="status" aria-live="polite"></p>
-    <section class="reading" aria-labelledby="readingTitle">
-      <div class="label-row"><h2 id="readingTitle">自动中文阅读</h2><span class="muted">仅当前会话 · 本地英译中</span></div>
-      <p class="reading-intro">开启一次，后续最新助手回复自动更新到这里。中文译文只在侧栏显示。</p>
-      <div class="actions"><button id="readStart" class="primary" disabled>开启自动阅读</button><button id="readPause" hidden>暂停并清空译文</button></div>
-      <p id="readStatus" class="status" role="status" aria-live="polite">尚未开启。先进入 Claude 会话，再点击开启。</p>
-      <div id="replyText" class="reply-text reply-view" lang="zh-CN" hidden></div>
-      <p id="replyWarnings" class="warning" role="status"></p>
-      <details id="replyOriginalBox" hidden><summary>展开英文原文核对</summary><pre id="replyOriginal" class="reply-text" lang="en"></pre></details>
-      <p class="muted">显示稳定片段或快照；生成中的回复可能继续更新。代码和链接按文本保留，不翻译思考区或文档区。</p>
+    <section id="askPanel" role="tabpanel" aria-labelledby="askTab">
+      <section class="engine"><span class="dot" aria-hidden="true"></span><div><strong>中文 → 英文</strong><p id="engineStatus" role="status">正在检查本地引擎…</p></div><button id="check" class="text-button">重新检查</button></section>
+      <section class="editor-card">
+        <div class="label-row"><label for="source">中文草稿</label><select id="language" aria-label="中文类型"><option value="zh">简体中文 → 英文</option><option value="zh-Hant">繁體中文 → 英文</option></select></div>
+        <textarea id="source" rows="6" placeholder="把想问的问题写在这里…" spellcheck="false" disabled></textarea>
+        <div class="meta"><span>点击后才开始翻译</span><span id="count">0 / 12,000</span></div>
+        <div class="translation-actions"><button id="translate" class="primary" disabled>翻译成英文 <span aria-hidden="true">↓</span></button><button id="cancel" hidden>取消</button></div>
+        <p id="taskStatus" class="status" role="status" aria-live="polite"></p>
+      </section>
+      <section class="editor-card">
+        <div class="label-row"><label for="output">英文预览</label><span class="muted">可编辑，填入前请核对</span></div>
+        <textarea id="output" rows="6" placeholder="英文预览会显示在这里" spellcheck="true" lang="en" disabled></textarea>
+        <p id="validity" class="status" role="status"></p>
+        <p id="warning" class="warning" role="status"></p>
+        <p id="boundaryStatus" class="warning" role="alert"></p>
+        <div id="replaceBox" class="confirm" hidden><strong>Claude 中已有草稿</strong><p>替换会移除网页现有文字。请先保留需要的内容。</p><div class="actions"><button id="replace" class="danger">替换现有草稿</button><button id="keep">取消</button></div></div>
+        <div class="actions"><button id="fill" class="primary" disabled>填入 Claude</button><button id="copy" aria-label="复制英文提问" disabled>复制英文</button><button id="clear" aria-label="清空草稿并暂停阅读" disabled>清空</button></div>
+        <p id="actionStatus" class="status" role="status" aria-live="polite"></p>
+      </section>
+      <p class="section-note">只做自然翻译，确认后填入。<strong>由你发送。</strong></p>
+    </section>
+    <section id="readingPanel" role="tabpanel" aria-labelledby="readingTab" hidden>
+      <section class="reading-controls">
+        <div class="label-row"><h2>读懂最新回复</h2><span class="muted">当前会话</span></div>
+        <p class="intro">开启一次，后续回复自动更新。切回提问也会继续阅读。</p>
+        <div class="actions"><button id="readStart" class="primary" disabled>开启自动阅读</button><button id="readPause" hidden>暂停并清空译文</button></div>
+        <p id="readStatus" class="status" role="status" aria-live="polite">先进入 Claude 会话，再开启。</p>
+      </section>
+      <div class="language-tabs" role="tablist" aria-label="回复语言">
+        <button id="translatedTab" role="tab" aria-controls="translatedPanel" aria-selected="true" tabindex="0">中文译文</button>
+        <button id="originalTab" role="tab" aria-controls="replyOriginalBox" aria-selected="false" tabindex="-1" disabled>英文原文</button>
+      </div>
+      <div id="readingEmpty" class="empty-state"><span class="empty-mark" aria-hidden="true">文</span><strong>把英文留在网页，把中文读在这里</strong><p>开启后显示最新助手回复的稳定内容。代码和链接保留原文。</p></div>
+      <section id="translatedPanel" role="tabpanel" aria-labelledby="translatedTab">
+        <div id="replyText" class="reply-text reply-view" lang="zh-CN" hidden></div>
+        <p id="replyWarnings" class="warning" role="status"></p>
+      </section>
+      <section id="replyOriginalBox" role="tabpanel" aria-labelledby="originalTab" hidden>
+        <div class="original-toolbar"><div class="view-options" role="group" aria-label="英文原文视图"><button id="originalReadMode" aria-pressed="true">阅读</button><button id="originalTextMode" aria-pressed="false">文本</button></div><button id="copyOriginal" class="text-button" disabled>复制文本</button></div>
+        <div id="replyOriginal" class="reply-text reply-view" lang="en"></div>
+        <p id="originalTextHelp" class="muted" hidden>这是从网页整理的内部文本，并非 Claude 的原始 Markdown 源。</p>
+        <pre id="replyOriginalText" class="raw-text" lang="en" tabindex="0" aria-label="英文内部原文文本" hidden></pre>
+        <p id="originalCopyStatus" class="status" role="status" aria-live="polite"></p>
+      </section>
+      <p class="section-note">译文可能继续更新，请对照原文核对术语和含义。</p>
     </section>
   </main>
-  <footer>问题草稿只保留至本次浏览器会话。回复译文仅在内存中，暂停、隐藏或切换目标后清除。<br>本地翻译可能误译，尤其是术语和否定句。插件不会自动发送。</footer>
+  <details class="help"><summary>使用与隐私说明</summary><p>中文只在侧栏显示。草稿保留至本次浏览器会话；回复只在内存中，暂停、隐藏或切换目标后清除。分区切换不会暂停阅读。“清空”会清除当前草稿并暂停阅读。</p><p>本地翻译可能误译。代码与链接以文本保留，不加载外部资源，插件不会自动发送。</p></details>
 </body>
 </html>

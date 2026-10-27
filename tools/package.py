@@ -19,7 +19,16 @@ FILES = [
     'evidence/unit-tests-0.2.0.txt', 'evidence/quality-model-0.2.1.json',
     'evidence/quality-model-0.2.1-attempt1.json', 'evidence/quality-model-0.2.1-attempt2.json',
     'evidence/quality-model-0.2.1-initial-protocol.json', 'evidence/quality-model-0.2.1-marker-diagnostics.json',
+    'UI_TASK.md', 'evidence/ui-0.2.3.json',
 ]
+FILES += [f'evidence/ui-0.2.3/{name}.png' for name in [
+    'empty-light-400', 'preparing-light-400',
+    'original-light-320', 'original-light-400', 'original-light-600',
+    'original-dark-320', 'original-dark-400', 'original-dark-600',
+    'translated-light-400', 'translated-dark-400', 'ask-light-320', 'ask-dark-600',
+    'confirm-light-400', 'boundary-light-400', 'question-loading-light-400',
+    'question-error-light-400', 'reader-error-light-400',
+]]
 
 def main():
     manifest = json.loads((ROOT / 'manifest.json').read_text(encoding='utf-8'))

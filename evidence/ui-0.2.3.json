@@ -1,0 +1,252 @@
+{
+  "date": "2026-10-27",
+  "browser": "156.0.8078.48",
+  "scope": "Real Chrome UI renderer. Public fixture content; extension APIs, model, clipboard and errors mocked. Not live Claude/real clipboard.",
+  "checks": [
+    {
+      "name": "keyboard roving tabs, Tab order and visible focus",
+      "passed": true,
+      "focus": {
+        "visible": true,
+        "style": "solid",
+        "width": "2px"
+      }
+    },
+    {
+      "name": "English defaults to shared reading layout, raw view/copy exact, clipboard rejection selects exact raw text",
+      "passed": true
+    },
+    {
+      "name": "workspace/language/format switches keep drafts, translation, same target and one running reader instance",
+      "passed": true
+    },
+    {
+      "name": "320/400/600 light and dark: no page horizontal overflow, code scroll and keyboard entry",
+      "passed": true
+    },
+    {
+      "name": "pending replacement and character boundary remain visible across workspace switch without sending",
+      "passed": true
+    },
+    {
+      "name": "question loading/error states survive view switches; hidden-pane errors have visible return entry",
+      "passed": true
+    },
+    {
+      "name": "reading pause/error clears memory and exposes retry; view switches alone never pause",
+      "passed": true
+    },
+    {
+      "name": "model text/URL/HTML never creates executable tags, clickable links or external resource requests",
+      "passed": true
+    }
+  ],
+  "screenshots": [
+    {
+      "name": "empty-light-400",
+      "file": "evidence/ui-0.2.3/empty-light-400.png",
+      "scenario": "未开启阅读的空状态",
+      "width": 400,
+      "theme": "light",
+      "sha256": "343b6439e762698d1c283e3ac1adb5aef996d7b0a3819acd888eca25440d6037",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "preparing-light-400",
+      "file": "evidence/ui-0.2.3/preparing-light-400.png",
+      "scenario": "英译中语言包准备进度与取消按钮",
+      "width": 400,
+      "theme": "light",
+      "sha256": "2ab259cfe417ea9fad697dfef18afdaa1206fbc6ed048c468cff17f65b9a3823",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "original-light-320",
+      "file": "evidence/ui-0.2.3/original-light-320.png",
+      "scenario": "英文默认阅读视图，长 URL 换行，代码横向滚动",
+      "width": 320,
+      "theme": "light",
+      "sha256": "ec562b3feca5f2cb4b7805fdf816ea99c32e3a6d577847a8049d13fc61c3e19c",
+      "overflow": {
+        "scroll": 320,
+        "viewport": 320
+      }
+    },
+    {
+      "name": "original-light-400",
+      "file": "evidence/ui-0.2.3/original-light-400.png",
+      "scenario": "英文默认阅读视图，长 URL 换行，代码横向滚动",
+      "width": 400,
+      "theme": "light",
+      "sha256": "e003971dc6b67ad8ef03f380d48e232bbba37f2458ec842e3023be91db8eced1",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "original-light-600",
+      "file": "evidence/ui-0.2.3/original-light-600.png",
+      "scenario": "英文默认阅读视图，长 URL 换行，代码横向滚动",
+      "width": 600,
+      "theme": "light",
+      "sha256": "fec40c8f0051612a470d91f0500c4270a9c6b3201e97c646b7f2e7750fad4339",
+      "overflow": {
+        "scroll": 600,
+        "viewport": 600
+      }
+    },
+    {
+      "name": "translated-light-400",
+      "file": "evidence/ui-0.2.3/translated-light-400.png",
+      "scenario": "中文译文与英文共用安全排版",
+      "width": 400,
+      "theme": "light",
+      "sha256": "f1c92a86bdf110511725ede18ec54bc8929604019869fdcddf903500bdca49e9",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "original-dark-320",
+      "file": "evidence/ui-0.2.3/original-dark-320.png",
+      "scenario": "英文默认阅读视图，长 URL 换行，代码横向滚动",
+      "width": 320,
+      "theme": "dark",
+      "sha256": "3c211ebbe19bb8e89696a2bc2e3c38feb7b0f7ed97c39a3af733b66b8c1665b3",
+      "overflow": {
+        "scroll": 320,
+        "viewport": 320
+      }
+    },
+    {
+      "name": "original-dark-400",
+      "file": "evidence/ui-0.2.3/original-dark-400.png",
+      "scenario": "英文默认阅读视图，长 URL 换行，代码横向滚动",
+      "width": 400,
+      "theme": "dark",
+      "sha256": "bdd77829654738ac4295e2a6d1ca89cf666af82ac8822f9c3deb2260bffec1fc",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "original-dark-600",
+      "file": "evidence/ui-0.2.3/original-dark-600.png",
+      "scenario": "英文默认阅读视图，长 URL 换行，代码横向滚动",
+      "width": 600,
+      "theme": "dark",
+      "sha256": "0e14f1784ec3380db0afddd1fc610c7d50d9f6e83307b7c9da61bd25c47fa03a",
+      "overflow": {
+        "scroll": 600,
+        "viewport": 600
+      }
+    },
+    {
+      "name": "translated-dark-400",
+      "file": "evidence/ui-0.2.3/translated-dark-400.png",
+      "scenario": "中文译文与英文共用安全排版",
+      "width": 400,
+      "theme": "dark",
+      "sha256": "e915a545bf5bfec3b88ccae21002d35b807169efe4f1984c72ddd96fe7009f39",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "ask-light-320",
+      "file": "evidence/ui-0.2.3/ask-light-320.png",
+      "scenario": "窄屏提问区与可达主按钮",
+      "width": 320,
+      "theme": "light",
+      "sha256": "7ad75d3bf2887287fd548a4d736ddc5acca5c8dd0c0882d5d38bd201cf08493a",
+      "overflow": {
+        "scroll": 320,
+        "viewport": 320
+      }
+    },
+    {
+      "name": "ask-dark-600",
+      "file": "evidence/ui-0.2.3/ask-dark-600.png",
+      "scenario": "深色宽屏提问区",
+      "width": 600,
+      "theme": "dark",
+      "sha256": "08e3eacb7e4c12348834d409a3e755332e8861255490ef1419b782ca9e2c8e7a",
+      "overflow": {
+        "scroll": 600,
+        "viewport": 600
+      }
+    },
+    {
+      "name": "confirm-light-400",
+      "file": "evidence/ui-0.2.3/confirm-light-400.png",
+      "scenario": "替换确认与取消按钮",
+      "width": 400,
+      "theme": "light",
+      "sha256": "1f0f283bdf629e498a6ab370290daf7023ecee596f678c23761403f36e4dcda5",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "boundary-light-400",
+      "file": "evidence/ui-0.2.3/boundary-light-400.png",
+      "scenario": "汉字边界拦截与位置提示",
+      "width": 400,
+      "theme": "light",
+      "sha256": "9076b80a5dbe72ac827b4d52de88714205e186cc66f01116c131dfbe9b4f7922",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "question-loading-light-400",
+      "file": "evidence/ui-0.2.3/question-loading-light-400.png",
+      "scenario": "提问翻译进行中与取消入口",
+      "width": 400,
+      "theme": "light",
+      "sha256": "1de4342474d624139a6a4a39e616eac9963efad0673ef103af92004f6bde2159",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "question-error-light-400",
+      "file": "evidence/ui-0.2.3/question-error-light-400.png",
+      "scenario": "另一分区可见的提问失败提示",
+      "width": 400,
+      "theme": "light",
+      "sha256": "4d3cb9075db8357d58e24f15ff39ccc6dd89d554e19639427bf5eb63f7effede",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    },
+    {
+      "name": "reader-error-light-400",
+      "file": "evidence/ui-0.2.3/reader-error-light-400.png",
+      "scenario": "阅读初始化失败、状态及重试入口",
+      "width": 400,
+      "theme": "light",
+      "sha256": "b9c547cc1093a104ed1fcb9f6d3899502c5d9de727fdd7782b67cb4728d9ea5b",
+      "overflow": {
+        "scroll": 400,
+        "viewport": 400
+      }
+    }
+  ],
+  "resourceRequests": [],
+  "runtimeErrors": []
+}

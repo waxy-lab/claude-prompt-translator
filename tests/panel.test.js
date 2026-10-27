@@ -11,10 +11,12 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   const html = await fs.readFile(new URL('../sidepanel.html', import.meta.url), 'utf8');
   const nodes = Object.fromEntries([...html.matchAll(/id="([^"]+)"/g)].map(([, id]) => [id, {
     id, value: '', textContent: '', disabled: false, hidden: false, dataset: {},
-    classList: { toggle() {} }, handlers: {},
+    classList: { toggle() {} }, handlers: {}, attributes: {},
+    setAttribute(name, value) { this.attributes[name] = String(value); },
+    getAttribute(name) { return this.attributes[name]; },
     addEventListener(name, handler) { this.handlers[name] = handler; },
     async trigger(name) { if (name === 'click' && this.disabled) return; return this.handlers[name]?.(); },
-    focus() {}, select() {}
+    focus() { globalThis.document.activeElement = this; }, select() {}
   }]));
   let poll;
   globalThis.setInterval = fn => { poll = fn; return 1; };
@@ -50,6 +52,9 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   const input = async (id, value) => { nodes[id].value = value; await nodes[id].trigger('input'); };
   await import('../sidepanel.js'); await tick();
   assert.equal(nodes.source.disabled, false);
+  assert.equal(nodes.askPanel.hidden, false); assert.equal(nodes.readingPanel.hidden, true);
+  await nodes.readingTab.trigger('click'); assert.equal(nodes.askPanel.hidden, true);
+  await nodes.askTab.trigger('click'); assert.equal(nodes.askTab.getAttribute('aria-selected'), 'true');
   await input('source', '中文'); await nodes.translate.trigger('click');
   assert.equal(nodes.output.value, 'English result'); assert.equal(nodes.fill.disabled, false);
   await input('output', 'Edited English'); assert.equal(nodes.fill.disabled, false);
@@ -110,9 +115,16 @@ test('侧栏集成：取消、过期结果、清空、恢复、多页隔离和�
   reply = { id: 'one', text: 'First answer.', stableText: 'First answer.', streaming: false };
   await nodes.readStart.trigger('click'); time += 2000; await poll(); await tick();
   assert.equal(nodes.replyText.textContent, '阅读译文:First answer.');
+  await nodes.readingTab.trigger('click'); await nodes.originalTab.trigger('click');
+  assert.equal(nodes.replyOriginalBox.hidden, false); assert.equal(nodes.originalReadMode.getAttribute('aria-pressed'), 'true');
+  await nodes.originalTextMode.trigger('click'); assert.equal(nodes.replyOriginalText.textContent, 'First answer.');
+  assert.equal(nodes.replyOriginalText.hidden, false);
+  await nodes.askTab.trigger('click'); assert.equal(nodes.replyText.textContent, '阅读译文:First answer.');
   reply = { id: 'two', text: 'Second answer.', stableText: 'Second answer.', streaming: false };
   await poll(); time += 2000; await poll(); await tick();
   assert.equal(nodes.replyText.textContent, '阅读译文:Second answer.'); assert.equal(replyCreates, 1);
+  assert.equal(nodes.readerIndicator.textContent, '自动阅读中');
+  await nodes.readingTab.trigger('click'); assert.equal(nodes.replyOriginalText.textContent, 'Second answer.');
   assert.ok(!JSON.stringify(memory).includes('阅读译文')); assert.ok(!JSON.stringify(requests).includes('阅读译文'));
   assert.ok(requests.filter(r => r.type === 'READ_REPLY').every(r => Object.keys(r).sort().join() === 'target,type'));
   document.hidden = true; document.handlers.visibilitychange();
