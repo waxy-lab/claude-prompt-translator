@@ -20,6 +20,7 @@ FILES = [
     'evidence/quality-model-0.2.1-attempt1.json', 'evidence/quality-model-0.2.1-attempt2.json',
     'evidence/quality-model-0.2.1-initial-protocol.json', 'evidence/quality-model-0.2.1-marker-diagnostics.json',
     'UI_TASK.md', 'evidence/ui-0.2.3.json',
+    'LANGUAGE_LABEL_TASK.md', 'evidence/language-label-0.2.4.json', 'evidence/language-model-0.2.4.json',
 ]
 FILES += [f'evidence/ui-0.2.3/{name}.png' for name in [
     'empty-light-400', 'preparing-light-400',

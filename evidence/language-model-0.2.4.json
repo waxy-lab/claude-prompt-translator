@@ -1,0 +1,119 @@
+{
+  "date": "2026-10-27",
+  "browser": "156.0.8078.48",
+  "base": "cd8095932ee1141eb6f08ae96a9b510ff6240a3e",
+  "timedOut": false,
+  "scope": "Real Chrome Translator shared by old/new pipelines on localhost; public samples only. Not extension-source or live Claude verification.",
+  "probe": {
+    "api": "function",
+    "samples": [
+      {
+        "source": "This python function returns a value.",
+        "old": {
+          "text": "这个 Python 函数返回一个值。",
+          "warnings": []
+        },
+        "updated": {
+          "text": "本 python 函数返回一个值。",
+          "warnings": [
+            "有段落的保护标记未通过校验，已退回安全分段翻译；请重点核对该段措辞。"
+          ]
+        }
+      },
+      {
+        "source": "In PYTHON, a recursive function calls itself.",
+        "old": {
+          "text": "在 PYTHON，递归函数调用自身。",
+          "warnings": [
+            "有段落的保护标记未通过校验，已退回安全分段翻译；请重点核对该段措辞。"
+          ]
+        },
+        "updated": {
+          "text": "在 PYTHON，递归函数调用自身。",
+          "warnings": [
+            "有段落的保护标记未通过校验，已退回安全分段翻译；请重点核对该段措辞。"
+          ]
+        }
+      },
+      {
+        "source": "A python is a large snake.",
+        "old": {
+          "text": "蟒蛇是一条大蛇。",
+          "warnings": []
+        },
+        "updated": {
+          "text": "蟒蛇是一条大蛇。",
+          "warnings": []
+        }
+      },
+      {
+        "source": "python",
+        "old": {
+          "text": "蟒蛇",
+          "warnings": []
+        },
+        "updated": {
+          "text": "python",
+          "warnings": [
+            "孤立的 Python 名称缺少上下文，已保留英文；请对照原文核对。"
+          ]
+        }
+      }
+    ],
+    "calls": [
+      {
+        "pipeline": "0.2.3",
+        "body": "This python function returns a value."
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": "This cpt_keep_00000 function returns a value."
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": "This"
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": "function returns a value."
+      },
+      {
+        "pipeline": "0.2.3",
+        "body": "In cpt_keep_00000, a recursive function calls itself."
+      },
+      {
+        "pipeline": "0.2.3",
+        "body": "In"
+      },
+      {
+        "pipeline": "0.2.3",
+        "body": ", a recursive function calls itself."
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": "In cpt_keep_00000, a recursive function calls itself."
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": "In"
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": ", a recursive function calls itself."
+      },
+      {
+        "pipeline": "0.2.3",
+        "body": "A python is a large snake."
+      },
+      {
+        "pipeline": "0.2.4",
+        "body": "A python is a large snake."
+      },
+      {
+        "pipeline": "0.2.3",
+        "body": "python"
+      }
+    ],
+    "finished": true
+  }
+}

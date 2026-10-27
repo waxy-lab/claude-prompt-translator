@@ -2,16 +2,16 @@
 
 在 Chrome 原生侧栏写中文，本机翻译成自然英文，核对后明确点击填入 Claude，由你手动发送。一次开启“自动中文阅读”后，当前会话的后续最新助手回复自动在侧栏显示中文。中文草稿和回复译文不写入 Claude 网页。
 
-版本：0.2.3（第 3 轮待独立审查版），个人本地加载版。原生 HTML/CSS/JavaScript，无运行时第三方依赖、云翻译、密钥或后台服务器。
+版本：0.2.4（第 4 轮待独立审查版），个人本地加载版。原生 HTML/CSS/JavaScript，无运行时第三方依赖、云翻译、密钥或后台服务器。
 
 从 GitHub 获取源码时，下载并解压仓库 ZIP，或克隆仓库，然后直接加载包含 `manifest.json` 的项目根目录即可；`dist/` 为本地生成目录，不随 Git 源码提交。如需单独的安装包，运行 `python tools/package.py` 生成。
 
-**验证程度：50 项逻辑测试、24 个 Chrome 本地页面场景及 8 组界面检查通过。0.2.3 将英文原文改为默认阅读排版，并整理“提问 / 阅读”分区；17 张公开夹具截图覆盖窄宽侧栏、浅深色与重要状态。扩展 API、模型及剪贴板在界面检查中为模拟；真实 Claude 新边界仍待复核。此前模型样例有改善，也仍有术语误译，不能保证所有文本正确。** 详见 [TEST_REPORT.md](TEST_REPORT.md)。
+**验证程度：53 项逻辑测试、24 个原有 Chrome 场景及 5 组语言栏回归通过。0.2.4 修正嵌套语言栏重复进入正文，并保护明确编程语境下 Python 的大小写变体；真实本地模型复现了旧版孤立 python → 蟒蛇，新版保留英文并提示。动物语境仍正常翻译。0.2.3 的界面与 17 张公开夹具截图作为历史证据保留，本轮未改 UI。真实 Claude 页面结构尚未取得，仍待实际复核；其他术语误译也可能存在。** 详见 [TEST_REPORT.md](TEST_REPORT.md)。
 
 ## 安装
 
 1. 使用桌面版 Google Chrome。清单最低版本为 138，但版本号不代表 API 或语言包实际可用；以侧栏提示为准。无需修改实验开关。
-2. 使用交付目录 `dist/claude-english-assistant`，或解压 `dist/claude-english-assistant-0.2.3.zip`。
+2. 使用交付目录 `dist/claude-english-assistant`，或解压 `dist/claude-english-assistant-0.2.4.zip`。
 3. 在 Chrome 地址栏打开 `chrome://extensions`，开启右上角“开发者模式”。
 4. 点击“加载已解压的扩展程序”，选择**直接包含 manifest.json 的文件夹**。ZIP 需要先解压。
 5. 打开 `https://claude.ai/` 并进入聊天页，点击工具栏中的扩展图标；未显示时可在拼图菜单中找到“Claude 英文提问助手”。
@@ -20,7 +20,7 @@
 
 ### 已安装旧版本的更新方法
 
-先复制保留需要的中文、英文和回复译文（重新加载扩展会清空临时内容），在 `chrome://extensions` 找到本扩展，点击卡片上的圆形刷新按钮“重新加载”，确认版本显示 0.2.3。若加载的是本项目根目录或 dist 目录，无需重新选择文件夹；若解压到了别处，先替换为新版文件。版本没变化时，用“加载已解压的扩展程序”明确选择上述 dist 文件夹，避免重载另一份旧副本。回到 Claude，再点扩展图标并开启自动阅读。
+先复制保留需要的中文、英文和回复译文（重新加载扩展会清空临时内容），在 `chrome://extensions` 找到本扩展，点击卡片上的圆形刷新按钮“重新加载”，确认版本显示 0.2.4。若加载的是本项目根目录或 dist 目录，无需重新选择文件夹；若解压到了别处，先替换为新版文件。版本没变化时，用“加载已解压的扩展程序”明确选择上述 dist 文件夹，避免重载另一份旧副本。回到 Claude，再点扩展图标并开启自动阅读。
 
 ## 使用
 
@@ -83,6 +83,10 @@
 
 这不会改变本地模型的能力上限；例如 memoization 在实测中仍被译为“备忘录”。语言名称如 Python 保留英文，避免字面误译为“蟒蛇”。请对照英文核对概念、否定句和专名；不强行全局替换自然语言词语来伪造翻译准确。
 
+0.2.4 对语言栏作局部去重：只沿每个代码块向上最多六层，在所属正文内检查代码分支前方的纯语言/按钮行；遇到包含多个代码块的祖先后停止上溯。语言栏与有效代码元数据一致（忽略大小写）时仅在代码语言区显示一次；无元数据时使用已识别的纯语言栏。含段落、链接、行内代码或其他混合正文的区域不当作可删除的语言栏，元数据冲突或超出层级也保留内容。未知结构可能仍有重复英文标签，不以吞正文换取去重。
+
+回复技术保护仅针对 Python 增加大小写语境判断，不把整份技术名单改成不区分大小写。包含 function/code/recursion 等明确编程词且无已识别蛇类语境时保留原拼写；蛇类语境的 python/Python/PYTHON 允许正常翻译。孤立的 Python 名称缺少上下文，保留英文并提示核对。规则是有限词法判断，不是完整语义识别，也不对中文“蟒蛇”作全局替换。真实模型样例中保护标记仍可能失败并降级，措辞不保证更流畅。
+
 - 未闭合围栏从开始处到文末全部保留，并提示。
 - 未闭合行内代码、未闭合或跨行链接目标、缩进代码块会明确拒绝翻译。请补齐或改为围栏代码。
 - 尖括号片段原样保留并提示；不解析完整 HTML、复杂嵌套、表格、数学公式、MDX 或所有 Markdown 方言。重要的技术片段请主动加代码围栏。
@@ -127,10 +131,13 @@ npm test
 $env:PLAYWRIGHT_MODULE = '你的现有 Playwright 包绝对路径'
 node tests/browser-fixtures.cjs
 node tests/reading-browser.cjs
+node tests/language-label-browser.cjs
 node tests/ui-browser.cjs
 ```
 
-依次覆盖原有填入回归、回复读取与自动更新、界面交互与截图。结果在 `evidence/browser-fixtures.json`、`evidence/reading-browser-fixtures.json` 和 `evidence/ui-0.2.3.json`。截图索引记录每张 PNG 的尺寸、状态及 SHA-256；内容为公开夹具，扩展 API/Translator/剪贴板为模拟，不能替代真实 Claude 或剪贴板权限验收。
+依次覆盖原有填入回归、回复读取与自动更新、语言栏及真实 DOM→模拟模型→渲染回归、界面交互与截图。结果在 `evidence/browser-fixtures.json`、`evidence/reading-browser-fixtures.json`、`evidence/language-label-0.2.4.json` 和 `evidence/ui-0.2.3.json`。截图索引记录每张 PNG 的尺寸、状态及 SHA-256；内容为公开夹具，扩展 API/Translator/剪贴板为模拟，不能替代真实 Claude 或剪贴板权限验收。本轮只重跑受影响回归，未重新生成 UI 截图。
+
+可选 `node tests/language-model.cjs` 对比 Git 固定 0.2.3 基线与当前流程，共用同一个真实本地模型翻译四条公开样例，记录 `evidence/language-model-0.2.4.json`。可用 `LANGUAGE_PROFILE` 指向本项目 `.validation` 下已生成且未在运行的隔离配置，不使用日常浏览器配置；普通 localhost 结果不代表真实 Claude 或扩展源内通过。
 
 可选真实英译中检查：`node tests/model-readiness.cjs`。一次点击后用同一实例翻译两段公开样例，使用新的隔离 Chrome 配置和本机普通测试页，不访问 Claude。结果在 `evidence/local-model-0.2.0.json`，不代表扩展源内或真实会话端到端通过。
 

@@ -54,12 +54,44 @@ export function readLatestReply(expected) {
     const label = labelText(node).trim();
     return /^(Python|JavaScript|TypeScript|Java|C\+\+|C#|Rust|Go|SQL|HTML|CSS|JSON|YAML|Bash|Shell|PowerShell)$/i.test(label) ? label : '';
   }
-  function language(pre) {
+  const codeHeaders = new Set(), codeLanguages = new Map();
+  function metadataLanguage(pre) {
     const code = pre.querySelector('code');
     const value = code?.getAttribute('data-language') || pre.getAttribute('data-language') ||
       [...(code?.classList || []), ...pre.classList].find(c => c.startsWith('language-'))?.slice(9) || '';
-    if (/^[A-Za-z0-9_+#.-]{1,32}$/.test(value)) return value;
-    return codeHeaderLabel(pre.previousElementSibling);
+    return /^[A-Za-z0-9_+#.-]{1,32}$/.test(value) ? value : '';
+  }
+  function prepareCodeHeaders() {
+    const rootSet = new Set(roots);
+    const pres = [...new Set(roots.flatMap(root => root.matches('pre') ? [root] : [...root.querySelectorAll('pre')]))];
+    if (pres.length > 10000) throw Error('unsupported-depth');
+    // Count once, rather than repeatedly searching an entire answer per code block.
+    const counts = new Map();
+    for (const pre of pres) {
+      if (rootSet.has(pre)) continue;
+      for (let parent = pre.parentElement, level = 0; parent && level < 6; parent = parent.parentElement, level++) {
+        counts.set(parent, (counts.get(parent) || 0) + 1);
+        if (rootSet.has(parent)) break;
+      }
+    }
+    for (const pre of pres) {
+      const headers = []; let branch = pre;
+      // Inspect only preceding siblings on the code's bounded wrapper path. Stop
+      // before climbing through a multi-code container or outside this body root.
+      for (let level = 0; level < 6 && !rootSet.has(branch); level++) {
+        const parent = branch.parentElement;
+        if (!parent || !counts.has(parent)) break;
+        const header = branch.previousElementSibling, label = codeHeaderLabel(header);
+        if (label) headers.push({ node: header, label });
+        if (counts.get(parent) !== 1) break;
+        branch = parent;
+      }
+      const value = metadataLanguage(pre) || headers[0]?.label || '';
+      codeLanguages.set(pre, value);
+      for (const header of headers) {
+        if (header.label.toLowerCase() === value.toLowerCase()) codeHeaders.add(header.node);
+      }
+    }
   }
   function serialize(node, depth = 0) {
     if (++nodes > 10000 || depth > 64) throw Error('unsupported-depth');
@@ -73,7 +105,7 @@ export function readLatestReply(expected) {
       const code = take(node.querySelector('code')?.textContent ?? node.textContent ?? '');
       const marker = fence(code);
       // Always add ONE formatting separator, so the renderer can recover exact code bytes.
-      return `\n\n${marker}${language(node)}\n${code}\n${marker}\n\n`;
+      return `\n\n${marker}${codeLanguages.get(node) || ''}\n${code}\n${marker}\n\n`;
     }
     if (tag === 'code') {
       const code = take(node.textContent || '');
@@ -85,8 +117,8 @@ export function readLatestReply(expected) {
       const marker = fence(code, 1), pad = needsPad ? ' ' : '';
       return `${marker}${pad}${code}${pad}${marker}`;
     }
-    // A language/copy header adjacent to <pre> is editor chrome, not a paragraph.
-    if (node.parentElement?.querySelector(':scope > pre') && codeHeaderLabel(node)) return '';
+    // Only confirmed pure headers for one local code component are disposable.
+    if (codeHeaders.has(node)) return '';
     // Buttons are skipped independently above. Mixed text/button containers keep
     // their prose; pure button rows naturally serialize to an empty string.
     if (tag === 'br') return '\n';
@@ -102,6 +134,7 @@ export function readLatestReply(expected) {
     return text;
   }
   try {
+    prepareCodeHeaders();
     const unsafe = roots.some(root => [...root.querySelectorAll('math,.katex,canvas,iframe')].some(visible));
     if (unsafe) throw Error('unsupported-nontext');
     const blocks = roots.flatMap(root => [...root.childNodes].map(node => serialize(node))).filter(text => text.trim());
