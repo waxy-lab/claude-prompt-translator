@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>英文提问助手</title>
+  <link rel="stylesheet" href="sidepanel.css">
+  <script type="module" src="sidepanel.js"></script>
+</head>
+<body>
+  <header><span class="eyebrow">CLAUDE · 语言辅助</span><h1>英文提问助手<span class="badge">本地</span></h1>
+    <p>用中文组织问题，检查英文后填入 Claude，<strong>由你发送</strong>。</p>
+  </header>
+  <main>
+    <section class="engine"><span class="dot" aria-hidden="true"></span><div><strong>Chrome 本地翻译</strong><p id="engineStatus" role="status">正在检查本地引擎…</p></div><button id="check" class="small">重新检查</button></section>
+    <p id="targetStatus" class="target" role="status">正在核对目标页面…</p>
+    <div class="label-row"><label for="source">中文草稿</label><select id="language" aria-label="中文类型"><option value="zh">简体中文 → 英文</option><option value="zh-Hant">繁體中文 → 英文</option></select></div>
+    <textarea id="source" rows="8" placeholder="在这里写下你的问题…&#10;代码和链接会尽量按原样保留。" spellcheck="false" disabled></textarea>
+    <div class="meta"><span>仅在点击时翻译</span><span id="count">0 / 12,000</span></div>
+    <div class="translation-actions"><button id="translate" class="primary" disabled>翻译成英文 <span aria-hidden="true">↓</span></button><button id="cancel" hidden>取消翻译</button></div>
+    <p id="taskStatus" class="status" role="status" aria-live="polite"></p>
+    <div class="label-row"><label for="output">英文结果</label><span class="muted">可编辑，填入前请核对</span></div>
+    <textarea id="output" rows="8" placeholder="英文翻译会显示在这里" spellcheck="true" lang="en" disabled></textarea>
+    <p id="validity" class="status" role="status"></p>
+    <p id="warning" class="warning" role="status"></p>
+    <div id="replaceBox" class="confirm" hidden><strong>Claude 中已有草稿</strong><p>替换会移除网页输入框中的现有文字。继续前请确认已自行保留需要的内容。</p><div class="actions"><button id="replace" class="danger">替换现有草稿</button><button id="keep">取消</button></div></div>
+    <div class="actions"><button id="fill" class="primary" disabled>填入 Claude</button><button id="copy" disabled>复制英文</button><button id="clear" disabled>清空</button></div>
+    <p id="actionStatus" class="status" role="status" aria-live="polite"></p>
+  </main>
+  <footer>草稿只保留至本次浏览器会话；关闭标签页或点击清空可删除当前草稿。<br>本地翻译可能误译，尤其是术语和否定句。插件不会自动发送。</footer>
+</body>
+</html>

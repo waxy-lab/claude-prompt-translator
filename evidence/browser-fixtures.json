@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-27",
+  "version": "156.0.8078.48",
+  "scope": "Real Chrome DOM with intercepted local fixtures. NOT live Claude compatibility or extension loading.",
+  "results": [
+    {
+      "name": "form-free ProseMirror, no main ancestor, plain text insertion",
+      "passed": true
+    },
+    {
+      "name": "explicit chat-input outside form and guarded replacement",
+      "passed": true
+    },
+    {
+      "name": "arbitrary contenteditable and search textbox are rejected",
+      "passed": true
+    },
+    {
+      "name": "multiple known visible editors are rejected",
+      "passed": true
+    },
+    {
+      "name": "hidden and artifact editors excluded, visible composer chosen",
+      "passed": true
+    },
+    {
+      "name": "DOM edit after confirmation prevents overwrite",
+      "passed": true
+    }
+  ]
+}

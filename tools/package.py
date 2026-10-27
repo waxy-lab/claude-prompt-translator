@@ -1,0 +1,57 @@
+"""Allowlisted packaging: excludes tests, profiles, and other workspace files."""
+from pathlib import Path
+from zipfile import ZipFile, ZIP_DEFLATED
+import hashlib
+import json
+import shutil
+import subprocess
+
+ROOT = Path(__file__).resolve().parents[1]
+FILES = [
+    'manifest.json', 'background.js', 'sidepanel.html', 'sidepanel.css', 'sidepanel.js',
+    'lib/target.js', 'lib/protected-text.js', 'lib/task-gate.js', 'lib/translator.js',
+    'lib/draft-store.js', 'content/claude-adapter.js', 'README.md', 'TEST_REPORT.md', 'DESIGN.md',
+    'evidence/chrome-probe-2026-10-27.json', 'evidence/unit-tests.txt',
+    'evidence/browser-fixtures.json',
+]
+
+def main():
+    manifest = json.loads((ROOT / 'manifest.json').read_text(encoding='utf-8'))
+    assert manifest['manifest_version'] == 3
+    assert sorted(manifest['permissions']) == sorted(['sidePanel', 'activeTab', 'scripting', 'storage'])
+    assert not manifest.get('host_permissions')
+    for name in FILES:
+        assert (ROOT / name).is_file(), name
+        if name.endswith('.js'):
+            subprocess.run(['node', '--check', str(ROOT / name)], check=True, capture_output=True)
+    destination = ROOT / 'dist' / 'claude-english-assistant'
+    destination.mkdir(parents=True, exist_ok=True)
+    existing = {p.relative_to(destination).as_posix() for p in destination.rglob('*') if p.is_file()}
+    assert not (existing - set(FILES)), f'Unexpected delivery files: {existing - set(FILES)}'
+    hashes = {}
+    for name in FILES:
+        target = destination / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        shutil.copyfile(ROOT / name, target)
+        hashes[name] = hashlib.sha256(target.read_bytes()).hexdigest()
+    archive = ROOT / 'dist' / f'claude-english-assistant-{manifest["version"]}.zip'
+    with ZipFile(archive, 'w', ZIP_DEFLATED) as bundle:
+        for name in FILES:
+            bundle.write(destination / name, f'claude-english-assistant/{name}')
+    with ZipFile(archive) as bundle:
+        assert bundle.testzip() is None
+        assert set(bundle.namelist()) == {f'claude-english-assistant/{name}' for name in FILES}
+        for name, expected in hashes.items():
+            assert hashlib.sha256(bundle.read(f'claude-english-assistant/{name}')).hexdigest() == expected
+    (ROOT / 'dist' / 'BUILD_INFO.json').write_text(json.dumps({
+        'version': manifest['version'], 'files': hashes, 'zip': archive.name,
+        'zip_sha256': hashlib.sha256(archive.read_bytes()).hexdigest(),
+        'checks': ['JS syntax: pass', 'manifest permissions: pass', 'ZIP integrity: pass', 'directory/ZIP hashes: match'],
+        'scope': 'Packaging checks only. No native sidepanel/Claude compatibility claim.'
+    }, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+    print(f'Loadable directory: {destination}')
+    print(f'ZIP: {archive} ({archive.stat().st_size} bytes)')
+    print(f'Validated {len(FILES)} allowlisted files; syntax and ZIP integrity passed.')
+
+if __name__ == '__main__':
+    main()
