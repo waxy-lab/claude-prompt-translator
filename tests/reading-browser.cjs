@@ -9,6 +9,8 @@ const assert = require('node:assert/strict');
   const { readLatestReply } = await import('../content/reply-reader.js');
   const { captureIdentity } = await import('../lib/target.js');
   const { claudeAdapter } = await import('../content/claude-adapter.js');
+  const { replyBlocks, renderReply } = await import('../lib/reply-format.js');
+  const { translateReplyText } = await import('../lib/reply-text.js');
   const browser = await chromium.launch({ executablePath: 'C:/Program Files/Google/Chrome/Application/chrome.exe', headless: true });
   const results = [], runtimeErrors = [], requests = [];
   const files = new Set(['sidepanel.html', 'sidepanel.css', 'sidepanel.js', ...fs.readdirSync(path.join(root, 'lib')).filter(n => n.endsWith('.js')).map(n => 'lib/' + n)]);
@@ -80,6 +82,50 @@ const assert = require('node:assert/strict');
       const result = await run(readLatestReply, expected); assert.ok(!result.reply.text.includes('A11Y_PREVIEW')); assert.equal(result.reply.text.trim(), 'Actual answer.');
     });
 
+    await scenario('R1: newer font marker outranks older role; appending nested testid message changes latest ID once',
+      '<article data-message-author-role="assistant"><p>Older marked answer.</p></article><div class="font-claude-response"><p>Newest font answer.</p></div><aside><div class="font-claude-response">Not an answer</div></aside>', async () => {
+        const first = await run(readLatestReply, expected);
+        assert.equal(first.reply.text, 'Newest font answer.'); assert.ok(first.reply.id.startsWith('2:'));
+        await page.locator('body').evaluate(el => {
+          const article = document.createElement('article'); article.dataset.testid = 'assistant-message';
+          article.innerHTML = '<div class="font-claude-response"><p>Newest appended answer.</p></div>';
+          el.append(article);
+        });
+        const next = await run(readLatestReply, expected);
+        assert.equal(next.reply.text, 'Newest appended answer.'); assert.notEqual(next.reply.id, first.reply.id);
+        assert.ok(next.reply.id.startsWith('3:'), 'nested marker contributes only one independent message');
+      });
+    await scenario('R1: newer role/testid markers outrank older font marker in reversed order',
+      '<div class="font-claude-response"><p>Older font answer.</p></div><article data-message-author-role="assistant"><div class="font-claude-response"><p>Newer role answer.</p></div></article>', async () => {
+        assert.equal((await run(readLatestReply, expected)).reply.text, 'Newer role answer.');
+        await page.locator('article').evaluate(el => { el.removeAttribute('data-message-author-role'); el.dataset.testid = 'assistant-message'; });
+        const r = await run(readLatestReply, expected); assert.equal(r.reply.text, 'Newer role answer.'); assert.ok(r.reply.id.startsWith('2:'));
+      });
+    await scenario('R2: retain paragraph/raw warning plus buttons beside pre; remove only pure language and button rows',
+      '<article data-testid="assistant-message"><div class="standard-markdown"><div><p>Important: use a backup first.</p><button>More</button></div><div>Do not overwrite this warning.<button>More</button></div><div><span>Python</span><button>Copy</button></div><pre><code>run()</code></pre><div><button>Copy</button><button>More</button></div></div></article>', async () => {
+        const before = await page.locator('body').innerHTML(); const r = await run(readLatestReply, expected);
+        assert.ok(r.reply.text.includes('Important: use a backup first.')); assert.ok(r.reply.text.includes('Do not overwrite this warning.'));
+        assert.ok(r.reply.text.includes('```Python\nrun()\n```')); assert.ok(!/More|Copy/.test(r.reply.text));
+        assert.equal(r.reply.text.match(/Python/g).length, 1, 'language exists only in fence metadata');
+        assert.equal(await page.locator('body').innerHTML(), before);
+      });
+    await scenario('R3: inline code exact-byte round trip for boundary ticks/runs/original whitespace',
+      '<article data-testid="assistant-message"><p>Use <code></code> here.</p></article>', async () => {
+        const values = ['`template`', '`start', 'end`', '``template``', '```', 'a``b`c', ' left', 'right ', ' both ', '  both  ', ' ', '   ', ' `template` ', '  ``template``  ', '\t`value`\t', 'first\nsecond'];
+        for (const original of values) {
+          await page.locator('article code').evaluate((el, value) => { el.textContent = value; }, original);
+          const r = await run(readLatestReply, expected);
+          const translated = await translateReplyText(r.reply.text, async text => text);
+          const actual = await page.evaluate(({ parser, renderer, text }) => {
+            const replyBlocks = eval(`(${parser})`);
+            const renderReply = eval(`(${renderer})`);
+            const target = document.createElement('div'); renderReply(target, text);
+            return target.querySelector('code')?.textContent;
+          }, { parser: replyBlocks.toString(), renderer: renderReply.toString(), text: translated.text });
+          assert.equal(actual, original, `inline bytes for ${JSON.stringify(original)}`);
+        }
+      });
+
     // Load the actual sidebar module and CSS in the renderer; only APIs/model are simulated.
     await setup('<main><div class="ProseMirror" contenteditable="true"></div><article data-testid="assistant-message" data-message-id="one"><p>First answer.</p></article></main>');
     const target = { tabId: 1, windowId: 8, documentId: 'fixture-document', ...expected };
@@ -129,7 +175,7 @@ const assert = require('node:assert/strict');
 
     await panel.locator('#readStart').click();
     await panel.waitForFunction(() => document.querySelector('#replyText').textContent.includes('本地中文：First answer.'), {}, { timeout: 12000 });
-    await page.locator('main').evaluate(el => { const article = document.createElement('article'); article.dataset.testid = 'assistant-message'; article.dataset.messageId = 'two'; article.innerHTML = '<p>Second answer.</p>'; el.append(article); });
+    await page.locator('main').evaluate(el => { const article = document.createElement('div'); article.className = 'font-claude-response'; article.dataset.messageId = 'two'; article.innerHTML = '<p>Second answer.</p>'; el.append(article); });
     await panel.waitForFunction(() => document.querySelector('#replyText').textContent.includes('本地中文：Second answer.'), {}, { timeout: 12000 });
     const enabled = await panel.evaluate(() => fixture.creates.filter(c => c.from === 'en'));
     assert.equal(enabled.length, 1); assert.equal(enabled[0].gesture, true);

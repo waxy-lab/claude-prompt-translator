@@ -44,6 +44,22 @@
       "passed": true
     },
     {
+      "name": "R1: newer font marker outranks older role; appending nested testid message changes latest ID once",
+      "passed": true
+    },
+    {
+      "name": "R1: newer role/testid markers outrank older font marker in reversed order",
+      "passed": true
+    },
+    {
+      "name": "R2: retain paragraph/raw warning plus buttons beside pre; remove only pure language and button rows",
+      "passed": true
+    },
+    {
+      "name": "R3: inline code exact-byte round trip for boundary ticks/runs/original whitespace",
+      "passed": true
+    },
+    {
       "name": "actual sidebar sends exactly the preview, no appended instructions, blocks Chinese before preparing",
       "passed": true
     },

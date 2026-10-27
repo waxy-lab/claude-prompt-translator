@@ -20,9 +20,10 @@ export function readLatestReply(expected) {
   }
   const visible = node => !hidden(node) && node.getClientRects().length > 0;
   const outermost = nodes => nodes.filter(node => !nodes.some(other => other !== node && other.contains(node)));
-  const turns = outermost([...document.querySelectorAll('[data-message-author-role="assistant"],[data-testid="assistant-message"]')].filter(visible));
-  const fallbacks = outermost([...document.querySelectorAll('.font-claude-response')].filter(visible));
-  const latest = turns.at(-1) || fallbacks.at(-1);
+  // querySelectorAll returns document order across all supported marker types.
+  // Deduplicate nested markers together; marker type must never outrank recency.
+  const candidates = outermost([...document.querySelectorAll('[data-message-author-role="assistant"],[data-testid="assistant-message"],.font-claude-response')].filter(visible));
+  const latest = candidates.at(-1);
   if (!latest) return { ok: true, reply: null, message: '尚未识别到助手回复。只读取明确标记，不会扫描整页；若已有回复，可能需要适配页面结构。' };
   let roots = [];
   // Prefer the actual rendered Markdown body over an assistant turn that also contains UI.
@@ -39,14 +40,26 @@ export function readLatestReply(expected) {
   const join = parts => parts.filter(Boolean).reduce((a, b) =>
     a.endsWith('\n') && b.startsWith('\n') ? a.replace(/\n+$/, '') + '\n\n' + b.replace(/^\n+/, '') : a + b, '');
   const block = text => text.trim() ? `\n\n${text.trim()}\n\n` : '';
+  function codeHeaderLabel(node) {
+    // Prose (including inline code/links) is never a disposable language bar.
+    const prose = 'p,h1,h2,h3,h4,h5,h6,li,ul,ol,blockquote,table,pre,code,a';
+    if (!node || node.matches(prose) || node.querySelector(prose)) return '';
+    let visited = 0;
+    const labelText = (child, depth = 0) => {
+      if (++visited > 256 || depth > 16) return '\0';
+      if (child.nodeType === 3) return child.textContent || '';
+      if (child.nodeType !== 1 || child.matches('button,input,textarea,svg,script,style') || hidden(child)) return '';
+      return [...child.childNodes].map(n => labelText(n, depth + 1)).join('');
+    };
+    const label = labelText(node).trim();
+    return /^(Python|JavaScript|TypeScript|Java|C\+\+|C#|Rust|Go|SQL|HTML|CSS|JSON|YAML|Bash|Shell|PowerShell)$/i.test(label) ? label : '';
+  }
   function language(pre) {
     const code = pre.querySelector('code');
     const value = code?.getAttribute('data-language') || pre.getAttribute('data-language') ||
       [...(code?.classList || []), ...pre.classList].find(c => c.startsWith('language-'))?.slice(9) || '';
     if (/^[A-Za-z0-9_+#.-]{1,32}$/.test(value)) return value;
-    const header = pre.previousElementSibling;
-    const label = header?.textContent?.trim().match(/^(Python|JavaScript|TypeScript|Java|C\+\+|C#|Rust|Go|SQL|HTML|CSS|JSON|YAML|Bash|Shell|PowerShell)(?=\s|Copy|复制|$)/i)?.[1];
-    return label || '';
+    return codeHeaderLabel(pre.previousElementSibling);
   }
   function serialize(node, depth = 0) {
     if (++nodes > 10000 || depth > 64) throw Error('unsupported-depth');
@@ -64,14 +77,18 @@ export function readLatestReply(expected) {
     }
     if (tag === 'code') {
       const code = take(node.textContent || '');
-      const marker = fence(code, 1), pad = code.startsWith('`') || code.endsWith('`') ? ' ' : '';
+      if (!code) return '';
+      // Paired padding follows reply-format's decoder. Also pad pre-existing paired
+      // edge spaces so decoding removes formatting, never the original whitespace.
+      const needsPad = code.startsWith('`') || code.endsWith('`') ||
+        (code.startsWith(' ') && code.endsWith(' ') && /[^ ]/.test(code));
+      const marker = fence(code, 1), pad = needsPad ? ' ' : '';
       return `${marker}${pad}${code}${pad}${marker}`;
     }
     // A language/copy header adjacent to <pre> is editor chrome, not a paragraph.
-    if (node.parentElement?.querySelector(':scope > pre') && !node.querySelector('pre') && !node.matches('p,h1,h2,h3,h4,h5,h6,li,ul,ol,blockquote,table,a') &&
-        (node.querySelector('button') || /^(Python|JavaScript|TypeScript|Java|C\+\+|C#|Rust|Go|SQL|HTML|CSS|JSON|YAML|Bash|Shell|PowerShell)(?:\s|$)/i.test(node.textContent.trim()))) return '';
-    // Small non-prose control rows (e.g. install/dismiss cards and action bars).
-    if (node.querySelector(':scope > button') && !node.querySelector('p,h1,h2,h3,h4,h5,h6,pre,ul,ol,blockquote,table')) return '';
+    if (node.parentElement?.querySelector(':scope > pre') && codeHeaderLabel(node)) return '';
+    // Buttons are skipped independently above. Mixed text/button containers keep
+    // their prose; pure button rows naturally serialize to an empty string.
     if (tag === 'br') return '\n';
     const text = join([...node.childNodes].map(child => serialize(child, depth + 1)));
     if (tag === 'a') {
@@ -95,6 +112,6 @@ export function readLatestReply(expected) {
       [...document.querySelectorAll('[data-testid="stop-button"],button[aria-label="Stop response"],button[aria-label="Stop generating"],button[aria-label="停止响应"],button[aria-label="停止生成"]')].some(visible);
     const stableText = streaming ? join(blocks.slice(0, -1)).trim() : text;
     const replyId = latest.getAttribute('data-message-id') || latest.getAttribute('data-testid') || 'assistant';
-    return { ok: true, reply: { id: `${turns.length || fallbacks.length}:${replyId}`, text, stableText, streaming } };
+    return { ok: true, reply: { id: `${candidates.length}:${replyId}`, text, stableText, streaming } };
   } catch { return { ok: false, message: '回复过大或结构暂不支持，未读取部分结果。英文原文仍保留在网页。' }; }
 }
